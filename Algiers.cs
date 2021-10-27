@@ -13,7 +13,7 @@ namespace Algiers
         public bool done = false;
         public string start;
         public string instructions;
-        public string state;
+        public Parser.Mode mode = Parser.Mode.Standard;
         public Player player = new Player();
         public string inputChar = ">";
 
@@ -452,6 +452,7 @@ namespace Algiers
     public class Parser
     {
         static public string Clear = Environment.NewLine + Environment.NewLine;
+        public enum Mode {Standard, Raw}
 
         World world;
 
@@ -460,7 +461,7 @@ namespace Algiers
             world = _world;
         }
         
-        public string Parse(string input)
+        public string Parse(string input, Mode mode)
         {
             input = input.ToLower();
 
@@ -468,7 +469,24 @@ namespace Algiers
             {
                 return "Please type a command.";
             }
+            switch (mode)
+            {
+                case Mode.Standard:
+                    return StandardParse(input);
+                case Mode.Raw:
+                    return RawParse(input);
+                default:
+                    throw new Exception("Unexpected Parser.Mode value.");
+            }
+        }
 
+        string RawParse(string input)
+        {
+            return "";
+        }
+
+        string StandardParse(string input)
+        {
             string[] words = (input.Contains(" "))?
                 input.Split(" ", StringSplitOptions.RemoveEmptyEntries) : new string[]{input};
 
