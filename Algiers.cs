@@ -35,60 +35,99 @@ namespace Algiers
         }
 
         List<Command> commands = new List<Command>();
-        public List<Command> Commands => new List<Command>(commands); 
+        public List<Command> Commands => new List<Command>(commands);
 
-        Dictionary<string, Func<string>> responses = new Dictionary<string, Func<string>>();
-        Dictionary<string, Func<string, string>> responsesT = new Dictionary<string, Func<string, string>>();
-        Dictionary<string, Func<string, string, string>> responsesD = new Dictionary<string, Func<string, string, string>>();
+        Dictionary<Command, Func<string>> responses = new Dictionary<Command, Func<string>>();
+        Dictionary<Command, Func<string, string>> responsesT = new Dictionary<Command, Func<string, string>>();
+        Dictionary<Command, Func<string, string, string>> responsesD = new Dictionary<Command, Func<string, string, string>>();
         Func<string, string> rawResponse;
         public Func<string, string> RawResponse => rawResponse;
+
+        void CheckCommand(Command newcmd)
+        {
+            foreach (Command cmd in Commands)
+            {
+                if (newcmd.Equals(cmd))
+                {
+                    throw new Exception("A Command with phrase \"" + cmd.Phrase + "\" and overlapping validity already exists.");
+                }
+            }
+        }
 
         public Command AddIntransitiveCommand(string id, Func<string> response, State state, string[] aliases = null, string[] preps = null)
         {
             Command cmd = new Command(CommandType.Intransitive, id, state, _aliases: aliases, _preps: preps);
+            CheckCommand(cmd);
             commands.Add(cmd);
-            responses.Add(id, response);
+            responses.Add(cmd, response);
             return cmd;
         }
         public Command AddTransitiveCommand(string id, Func<string, string> responseT, State state, string missingTargetError, string[] aliases = null, string[] preps = null)
         {
             Command cmd = new Command(CommandType.Transitive, id, state, missingTargetError, _aliases: aliases, _preps: preps);
+            CheckCommand(cmd);
             commands.Add(cmd);
-            responsesT.Add(id, responseT);
+            responsesT.Add(cmd, responseT);
             return cmd;
         }
         public Command AddDitransitiveCommand(string id, Func<string, string, string> responseD, State state, string missingTargetError, string[] dipreps, string[] aliases = null)
         {
             Command cmd = new Command(CommandType.Ditransitive, id, state, missingTargetError, dipreps, aliases);
+            CheckCommand(cmd);
             commands.Add(cmd);
-            responsesD.Add(id, responseD);
+            responsesD.Add(cmd, responseD);
             return cmd;
         }
 
-        public void SetIntransitiveCommand(string id, Func<string> response)
+        public void SetIntransitiveCommand(Command cmd, Func<string> response)
         {
-            responses[id] = response;
+            responses[cmd] = response;
         }
-        public void SetTransitiveCommand(string id, Func<string, string> responseT)
+        public void SetTransitiveCommand(Command cmd, Func<string, string> responseT)
         {
-            responsesT[id] = responseT;
+            responsesT[cmd] = responseT;
         }
-        public void SetDitransitiveCommand(string id, Func<string, string, string> responseD)
+        public void SetDitransitiveCommand(Command cmd, Func<string, string, string> responseD)
         {
-            responsesD[id] = responseD;
+            responsesD[cmd] = responseD;
         }
 
-        public Func<string> GetIntransitiveResponse(string id)
+        public Command GetCommand(string phrase)
         {
-            return responses[id];
+            foreach(Command cmd in commands)
+            {
+                if (player.state.IsWithin(cmd.Validity))
+                {
+                    if (phrase == cmd.Phrase)
+                    {
+                        return cmd;
+                    }
+                    else if (cmd.Aliases != null)
+                    {
+                        foreach (string nickname in cmd.Aliases)
+                        {
+                            if (phrase == nickname)
+                            {
+                                return cmd;
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
         }
-        public Func<string, string> GetTransitiveResponse(string id)
+
+        public Func<string> GetIntransitiveResponse(Command cmd)
         {
-            return responsesT[id];
+            return responses[cmd];
         }
-        public Func<string, string, string> GetDitransitiveResponse(string id)
+        public Func<string, string> GetTransitiveResponse(Command cmd)
         {
-            return responsesD[id];
+            return responsesT[cmd];
+        }
+        public Func<string, string, string> GetDitransitiveResponse(Command cmd)
+        {
+            return responsesD[cmd];
         }
         
         public Room AddRoom(string roomID)
@@ -128,7 +167,7 @@ namespace Algiers
             return new State(~value);
         }
 
-        public bool Contains(int validity)
+        public bool IsWithin(int validity)
         {
             return (validity & value) == value;
         }
@@ -449,7 +488,7 @@ namespace Algiers
         CommandType type;
         public CommandType Type => type;
         string id;
-        public string ID => id;
+        public string Phrase => id;
         int validity;
         public int Validity => validity;
         string[] preps;
@@ -460,6 +499,17 @@ namespace Algiers
         public string [] Aliases => aliases;
         string missingTargetError;
         public string MissingTargetError => missingTargetError;
+
+        public override bool Equals(object obj)
+        {
+            if (obj.GetType() != typeof(Command))
+            {
+                return false;
+            }
+            Command other = (Command) obj;
+            int composition = this.validity & other.validity;
+            return (this.id == other.id) && (composition == this.validity || composition == other.validity);
+        }
     }
 
     public class Parser
@@ -503,41 +553,14 @@ namespace Algiers
             string[] words = (input.Contains(" "))?
                 input.Split(" ", StringSplitOptions.RemoveEmptyEntries) : new string[]{input};
 
-            Command cmd = FindCmd(words[0], world.Commands);
+            Command cmd = world.GetCommand(words[0]);
             if (cmd == null)
-            {
-                return words[0] + " is not a valid command.";
-            }
-            if (!world.player.state.Contains(cmd.Validity))
             {
                 return "You can't " + words[0] + " right now.";
             }           
             List<string> remainder = GetRemainderList(cmd, words);
 
             return HandleType(cmd, remainder);
-        }
-
-        Command FindCmd(string word0, List<Command> commands)
-        {
-            foreach (Command cmd in commands)
-            {
-                if (cmd.ID == word0)
-                {
-                    return cmd;
-                }
-                
-                if (cmd.Aliases != null)
-                {
-                    foreach (string nickname in cmd.Aliases)
-                    {
-                        if (nickname == word0)
-                        {
-                            return cmd;
-                        }
-                    }
-                }
-            }
-            return null;
         }
 
         List<string> GetRemainderList(Command cmd, string[] words)
@@ -574,7 +597,7 @@ namespace Algiers
                 case CommandType.Ditransitive:
                     return HandleDitransitive(cmd, remainder);
                 default:
-                    return "bad type";
+                    throw new Exception("Unexpected CommandType value.");
             }
         }
 
@@ -582,11 +605,11 @@ namespace Algiers
         {
             if (remainder.Count > 0)
             {
-                return cmd.ID + " shouldn't have any words after it.";
+                return cmd.Phrase + " shouldn't have any words after it.";
             }
             else
             {
-                return world.GetIntransitiveResponse(cmd.ID)();
+                return world.GetIntransitiveResponse(cmd)();
             }
         }
 
@@ -594,7 +617,7 @@ namespace Algiers
         {
             if (remainder.Count > 1)
             {
-                return "Only one word should come after " + cmd.ID + ".";
+                return "Only one word should come after " + cmd.Phrase + ".";
             }
             else if (remainder.Count < 1)
             {
@@ -603,7 +626,7 @@ namespace Algiers
             else
             {
                 string objID = remainder[0];
-                return world.GetTransitiveResponse(cmd.ID)(objID);
+                return world.GetTransitiveResponse(cmd)(objID);
             }
         }
 
@@ -622,7 +645,7 @@ namespace Algiers
 
                 if (remainder.Count == 0)
                 {
-                    return world.GetDitransitiveResponse(cmd.ID)(obj1ID, "");
+                    return world.GetDitransitiveResponse(cmd)(obj1ID, "");
                 }
 
                 //Deal with diprep
@@ -637,13 +660,13 @@ namespace Algiers
                 }
                 if (!goodDiprep)
                 {
-                    return cmd.ID + " .. " + remainder[0] + " is not a valid command. Try " + cmd.ID + " .. " + cmd.Dipreps[0] + " instead.";
+                    return cmd.Phrase + " .. " + remainder[0] + " is not a valid command. Try " + cmd.Phrase + " .. " + cmd.Dipreps[0] + " instead.";
                 }
                 else
                 {
                     remainder.RemoveAt(0);
                     string obj2ID = (remainder.Count < 1)? "" : remainder[0];
-                    return world.GetDitransitiveResponse(cmd.ID)(obj1ID, obj2ID);
+                    return world.GetDitransitiveResponse(cmd)(obj1ID, obj2ID);
                 }
             }
         }

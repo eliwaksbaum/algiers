@@ -158,7 +158,7 @@ namespace Algiers.StartKit
                     player.current_room.OnExit();
                     player.current_room = world.GetRoom(newRoomID);
                     player.current_room.OnEnter();
-                    return world.GetIntransitiveResponse("look")();
+                    return world.GetIntransitiveResponse(world.GetCommand("look"))();
                 }
             };
         }
