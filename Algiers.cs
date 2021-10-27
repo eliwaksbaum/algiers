@@ -24,7 +24,7 @@ namespace Algiers
         }
 
         List<Command> commands = new List<Command>();
-        public List<Command> Commands {get{return new List<Command>(commands);}} 
+        public List<Command> Commands => new List<Command>(commands); 
 
         Dictionary<string, Func<string>> responses = new Dictionary<string, Func<string>>();
         Dictionary<string, Func<string, string>> responsesT = new Dictionary<string, Func<string, string>>();
@@ -92,7 +92,7 @@ namespace Algiers
         public static State All = new State(~0);
 
         int value;
-        public int code {get{return value;}}
+        public int code => value;
 
         public State()
         {
@@ -128,10 +128,10 @@ namespace Algiers
         public Room current_room;
 
         Dictionary<string, GameObject> inventory = new Dictionary<string, GameObject>();
-        public Dictionary<string, GameObject>.ValueCollection Inventory {get{return inventory.Values;}}
+        public Dictionary<string, GameObject>.ValueCollection Inventory => inventory.Values;
 
         List<string> waypoints = new List<string>();
-        public List<string> Waypoints {get{return waypoints;}}
+        public List<string> Waypoints => waypoints;
 
         Dictionary<string, int> counters = new Dictionary<string, int>();
 
@@ -229,7 +229,7 @@ namespace Algiers
         }
 
         string id;
-        public string ID {get{return id;}}
+        public string ID => id;
         public string description;
         public Action OnEnter = () => {};
         public Action OnExit = () => {};
@@ -249,7 +249,7 @@ namespace Algiers
         {
             return gameObjects.ContainsValue(obj);
         }
-        public Dictionary<string, GameObject>.ValueCollection GameObjects {get{return gameObjects.Values;}}
+        public Dictionary<string, GameObject>.ValueCollection GameObjects => gameObjects.Values;
 
         List<Container> containers = new List<Container>();
 
@@ -327,7 +327,7 @@ namespace Algiers
         }
 
         string id;
-        public string ID {get{return id;}}
+        public string ID => id;
         Dictionary<string, Func<string>> responsesT = new Dictionary<string, Func<string>>();
         Dictionary<string, Func<string, string>> responsesD = new Dictionary<string, Func<string, string>>();
         Dictionary<string, bool> conditions = new Dictionary<string, bool> ();
@@ -406,7 +406,7 @@ namespace Algiers
         public Person(string _id) : base(_id) {}
 
         List<string> gifts = new List<string>();
-        public List<string> Gifts {get{return gifts;}}
+        public List<string> Gifts => gifts;
 
         public void AddGift(string giftID)
         {
@@ -434,19 +434,19 @@ namespace Algiers
         }
         
         CommandType type;
-        public CommandType Type {get{return type;}}
+        public CommandType Type => type;
         string id;
-        public string ID {get{return id;}}
+        public string ID => id;
         int validity;
-        public int Validity {get{return validity;}}
+        public int Validity => validity;
         string[] preps;
-        public string[] Preps {get{return preps;}}
+        public string[] Preps => preps;
         string[] dipreps;
-        public string[] Dipreps {get{return dipreps;}}
+        public string[] Dipreps => dipreps;
         string [] aliases;
-        public string [] Aliases {get{return aliases;}}
+        public string [] Aliases => aliases;
         string missingTargetError;
-        public string MissingTargetError {get{return missingTargetError;}}
+        public string MissingTargetError => missingTargetError;
     }
 
     public class Parser
