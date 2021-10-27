@@ -120,7 +120,7 @@ namespace Algiers
 
         public State Compose(State other)
         {
-            return new State(value & other.value);
+            return new State(value | other.value);
         }
 
         public State Inverse()
