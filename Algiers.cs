@@ -13,9 +13,20 @@ namespace Algiers
         public bool done = false;
         public string start;
         public string instructions;
-        public string state;
         public Player player = new Player();
         public string inputChar = ">";
+
+        Parser.Mode mode = Parser.Mode.Standard;
+        public Parser.Mode Mode => mode;
+        public void GoStandard()
+        {
+            mode = Parser.Mode.Standard;
+        }
+        public void GoRaw(Func<string, string> response)
+        {
+            mode = Parser.Mode.Raw;
+            rawResponse = response;
+        }
 
         Dictionary<string, Room> rooms = new Dictionary<string, Room>();
         public Room GetRoom(string id)
@@ -29,6 +40,8 @@ namespace Algiers
         Dictionary<string, Func<string>> responses = new Dictionary<string, Func<string>>();
         Dictionary<string, Func<string, string>> responsesT = new Dictionary<string, Func<string, string>>();
         Dictionary<string, Func<string, string, string>> responsesD = new Dictionary<string, Func<string, string, string>>();
+        Func<string, string> rawResponse;
+        public Func<string, string> RawResponse => rawResponse;
 
         public Command AddIntransitiveCommand(string id, Func<string> response, State state, string[] aliases = null, string[] preps = null)
         {
@@ -452,8 +465,16 @@ namespace Algiers
     public class Parser
     {
         static public string Clear = Environment.NewLine + Environment.NewLine;
+        public enum Mode {Standard, Raw}
+
+        World world;
+
+        public Parser(World _world)
+        {
+            world = _world;
+        }
         
-        static public string Parse(string input, World world)
+        public string Parse(string input, Mode mode)
         {
             input = input.ToLower();
 
@@ -461,7 +482,24 @@ namespace Algiers
             {
                 return "Please type a command.";
             }
+            switch (mode)
+            {
+                case Mode.Standard:
+                    return StandardParse(input);
+                case Mode.Raw:
+                    return RawParse(input);
+                default:
+                    throw new Exception("Unexpected Parser.Mode value.");
+            }
+        }
 
+        string RawParse(string input)
+        {
+            return world.RawResponse(input);
+        }
+
+        string StandardParse(string input)
+        {
             string[] words = (input.Contains(" "))?
                 input.Split(" ", StringSplitOptions.RemoveEmptyEntries) : new string[]{input};
 
@@ -476,10 +514,10 @@ namespace Algiers
             }           
             List<string> remainder = GetRemainderList(cmd, words);
 
-            return HandleType(cmd, remainder, world);
+            return HandleType(cmd, remainder);
         }
 
-        static Command FindCmd(string word0, List<Command> commands)
+        Command FindCmd(string word0, List<Command> commands)
         {
             foreach (Command cmd in commands)
             {
@@ -502,7 +540,7 @@ namespace Algiers
             return null;
         }
 
-        static List<string> GetRemainderList(Command cmd, string[] words)
+        List<string> GetRemainderList(Command cmd, string[] words)
         {
             List<string> remainder = new List<string>();
             foreach (string word in words)
@@ -525,22 +563,22 @@ namespace Algiers
             return remainder;
         }
 
-        static string HandleType(Command cmd, List<string> remainder, World world)
+        string HandleType(Command cmd, List<string> remainder)
         {
             switch (cmd.Type)
             {
                 case CommandType.Intransitive:
-                    return HandleIntransitive(cmd, remainder, world);
+                    return HandleIntransitive(cmd, remainder);
                 case CommandType.Transitive:
-                    return HandleTransitive(cmd, remainder, world);
+                    return HandleTransitive(cmd, remainder);
                 case CommandType.Ditransitive:
-                    return HandleDitransitive(cmd, remainder, world);
+                    return HandleDitransitive(cmd, remainder);
                 default:
                     return "bad type";
             }
         }
 
-        static string HandleIntransitive(Command cmd, List<string> remainder, World world)
+        string HandleIntransitive(Command cmd, List<string> remainder)
         {
             if (remainder.Count > 0)
             {
@@ -552,7 +590,7 @@ namespace Algiers
             }
         }
 
-        static string HandleTransitive(Command cmd, List<string> remainder, World world)
+        string HandleTransitive(Command cmd, List<string> remainder)
         {
             if (remainder.Count > 1)
             {
@@ -569,7 +607,7 @@ namespace Algiers
             }
         }
 
-        static string HandleDitransitive(Command cmd, List<string> remainder, World world)
+        string HandleDitransitive(Command cmd, List<string> remainder)
         {
             //Make sure we have an object1
             if (remainder.Count < 1)
