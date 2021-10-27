@@ -13,9 +13,20 @@ namespace Algiers
         public bool done = false;
         public string start;
         public string instructions;
-        public Parser.Mode mode = Parser.Mode.Standard;
         public Player player = new Player();
         public string inputChar = ">";
+
+        Parser.Mode mode = Parser.Mode.Standard;
+        public Parser.Mode Mode => mode;
+        public void GoStandard()
+        {
+            mode = Parser.Mode.Standard;
+        }
+        public void GoRaw(Func<string, string> response)
+        {
+            mode = Parser.Mode.Raw;
+            rawResponse = response;
+        }
 
         Dictionary<string, Room> rooms = new Dictionary<string, Room>();
         public Room GetRoom(string id)
@@ -29,6 +40,8 @@ namespace Algiers
         Dictionary<string, Func<string>> responses = new Dictionary<string, Func<string>>();
         Dictionary<string, Func<string, string>> responsesT = new Dictionary<string, Func<string, string>>();
         Dictionary<string, Func<string, string, string>> responsesD = new Dictionary<string, Func<string, string, string>>();
+        Func<string, string> rawResponse;
+        public Func<string, string> RawResponse => rawResponse;
 
         public Command AddIntransitiveCommand(string id, Func<string> response, State state, string[] aliases = null, string[] preps = null)
         {
@@ -482,7 +495,7 @@ namespace Algiers
 
         string RawParse(string input)
         {
-            return "";
+            return world.RawResponse(input);
         }
 
         string StandardParse(string input)
