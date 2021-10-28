@@ -54,9 +54,9 @@ namespace Algiers
             }
         }
 
-        public Command AddIntransitiveCommand(string id, Func<string> response, State state, string[] aliases = null, string[] preps = null)
+        public Command AddIntransitiveCommand(string id, Func<string> response, State state, string[] aliases = null)
         {
-            Command cmd = new Command(CommandType.Intransitive, id, state, _aliases: aliases, _preps: preps);
+            Command cmd = new Command(CommandType.Intransitive, id, state, _aliases: aliases);
             CheckCommand(cmd);
             commands.Add(cmd);
             responses.Add(cmd, response);
@@ -548,59 +548,57 @@ namespace Algiers
             string[] words = (input.Contains(" "))?
                 input.Split(" ", StringSplitOptions.RemoveEmptyEntries) : new string[]{input};
 
-            Command cmd = world.GetCommand(words[0]);
-            if (cmd == null)
+            Tuple<Command, int> found = FindCommand(words);
+            
+            if (found == null)
             {
-                return "You can't " + words[0] + " right now.";
-            }           
-            List<string> remainder = GetRemainderList(cmd, words);
-
-            return HandleType(cmd, remainder);
+                return "Your last input didn't contain an action you can take right now.";
+            }
+            else
+            {
+                Command cmd = found.Item1;
+                int head = found.Item2;
+                return HandleType(cmd, words, head);
+            }
         }
 
-        List<string> GetRemainderList(Command cmd, string[] words)
+        Tuple<Command, int> FindCommand(string[] words)
         {
-            List<string> remainder = new List<string>();
-            foreach (string word in words)
+            Tuple<Command, int> found = null;
+            string commandString = "";
+            for (int i = 0; i < words.Length; i++)
             {
-                remainder.Add(word);
-            }
-
-            remainder.RemoveAt(0);
-            if (cmd.Preps != null && remainder.Count > 0)
-            {
-                foreach (string prep in cmd.Preps)
+                commandString += words[i];
+                Command cmd = world.GetCommand(commandString);
+                if (cmd != null)
                 {
-                    if (remainder[0] == prep)
-                    {
-                        remainder.RemoveAt(0);
-                        break;
-                    }
+                    found = new Tuple<Command, int>(cmd, i+1);
                 }
+                commandString += " ";
             }
-            return remainder;
+            return found;
         }
 
-        string HandleType(Command cmd, List<string> remainder)
+        string HandleType(Command cmd, string[] words, int head)
         {
             switch (cmd.Type)
             {
                 case CommandType.Intransitive:
-                    return HandleIntransitive(cmd, remainder);
+                    return HandleIntransitive(cmd, words, head);
                 case CommandType.Transitive:
-                    return HandleTransitive(cmd, remainder);
+                    return HandleTransitive(cmd, words, head);
                 case CommandType.Ditransitive:
-                    return HandleDitransitive(cmd, remainder);
+                    return HandleDitransitive(cmd, words, head);
                 default:
                     throw new Exception("Unexpected CommandType value.");
             }
         }
 
-        string HandleIntransitive(Command cmd, List<string> remainder)
+        string HandleIntransitive(Command cmd, string[] words, int head)
         {
-            if (remainder.Count > 0)
+            if (head < words.Length)
             {
-                return cmd.Phrase + " shouldn't have any words after it.";
+                return cmd.Phrase + " doesn't take a target.";
             }
             else
             {
@@ -608,62 +606,97 @@ namespace Algiers
             }
         }
 
-        string HandleTransitive(Command cmd, List<string> remainder)
+        string HandleTransitive(Command cmd, string[] words, int head)
         {
-            if (remainder.Count > 1)
+            if (cmd.Preps != null)
             {
-                return "Only one word should come after " + cmd.Phrase + ".";
+                foreach (string prep in cmd.Preps)
+                {
+                    if (prep == words[head])
+                    {
+                        head ++;
+                    }
+                }
             }
-            else if (remainder.Count < 1)
+            if (head >= words.Length)
             {
                 return cmd.MissingTargetError;
             }
             else
             {
-                string objID = remainder[0];
+                string objID = String.Join(" ", Subarray(words, head));
                 return world.GetTransitiveResponse(cmd)(objID);
             }
         }
 
-        string HandleDitransitive(Command cmd, List<string> remainder)
+        string HandleDitransitive(Command cmd, string[] words, int head)
         {
-            //Make sure we have an object1
-            if (remainder.Count < 1)
+            //Make sure there are words after the command
+            if (head >= words.Length)
             {
                 return cmd.MissingTargetError;
             }
             else
             {
-                //Get obj1
-                string obj1ID = remainder[0];
-                remainder.RemoveAt(0);
+                //Split the list of words at diprep's position
+                int diprepIndex = 0;
+                string obj1ID = "";
+                string obj2ID = "";
 
-                if (remainder.Count == 0)
-                {
-                    return world.GetDitransitiveResponse(cmd)(obj1ID, "");
-                }
-
-                //Deal with diprep
-                bool goodDiprep = false;
                 foreach (string diprep in cmd.Dipreps)
                 {
-                    if (remainder[0] == diprep)
+                    for (int i = head; i < words.Length; i++)
                     {
-                        goodDiprep = true;
-                        break;
+                        if (diprep == words[i])
+                        {
+                            diprepIndex = i;
+                            if (i != head) //If there are words inbetween the end of the command and the diprep
+                            {
+                                obj1ID = String.Join(" ", Subarray(words, head, diprepIndex));
+                            }
+                            if (i < words.Length) //If there are words after the diprep
+                            {
+                                obj2ID = String.Join(" ", Subarray(words, diprepIndex + 1));
+                            }
+                        }
                     }
                 }
-                if (!goodDiprep)
+                
+                //If no diprep, treat the whole remaining string as obj1
+                if (diprepIndex == 0)
                 {
-                    return cmd.Phrase + " .. " + remainder[0] + " is not a valid command. Try " + cmd.Phrase + " .. " + cmd.Dipreps[0] + " instead.";
+                    obj1ID = String.Join(" ", Subarray(words, head));
+                    return world.GetDitransitiveResponse(cmd)(obj1ID, "");
                 }
                 else
                 {
-                    remainder.RemoveAt(0);
-                    string obj2ID = (remainder.Count < 1)? "" : remainder[0];
-                    return world.GetDitransitiveResponse(cmd)(obj1ID, obj2ID);
+                    if (obj1ID == "")
+                    {
+                        return cmd.MissingTargetError + " " + String.Join(" ", Subarray(words, diprepIndex));
+                    }
+
+                    Func<string, string, string> response = world.GetDitransitiveResponse(cmd);
+                    if (obj2ID == "")
+                    {
+                        return response(obj1ID, "");
+                    }
+                    else
+                    {
+                        return response(obj1ID, obj2ID);
+                    }
                 }
             }
+        }
+
+        string[] Subarray(string[] remainder, int start, int end = 0)
+        {
+            end = end == 0 ? remainder.Length : end;
+            string[] phrase = new string[end - start];
+            for (int i = start; i < end; i++)
+            {
+                phrase[i-start] = remainder[i];
+            }
+            return phrase;
         }
 
         public static bool StartsWithVowel(string str)

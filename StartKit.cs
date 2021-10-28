@@ -172,7 +172,7 @@ namespace Algiers.StartKit
                     return "You don't have " + indef + tool + " in your inventory.";
                 }
                 
-                GameObject toolObj = player.GetObject("tool");
+                GameObject toolObj = player.GetObject(tool);
                 Func<string> transitiveUse = toolObj.GetTransitiveResponse("use");
                 if (transitiveUse != null)
                 {
@@ -210,7 +210,7 @@ namespace Algiers.StartKit
                 if (!player.InInventory(gift))
                 {
                     string indef = (Parser.StartsWithVowel(gift))? "an " : "a ";
-                    return "You don't have " + indef + gift + " in you inventory.";
+                    return "You don't have " + indef + gift + " in your inventory.";
                 }
                 else if (person == "")
                 {
