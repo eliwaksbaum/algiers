@@ -130,7 +130,7 @@ namespace Algiers
         {
             foreach(Command cmd in commands)
             {
-                if (player.state.IsWithin(cmd.Validity))
+                if (player.State.IsWithin(cmd.Validity))
                 {
                     if (phrase == cmd.Phrase)
                     {
@@ -178,17 +178,20 @@ namespace Algiers
         public static State All = new State(~0);
 
         int value;
-        public int code => value;
+        public int Code => value;
+        public bool isPrime;
 
         public State()
         {
             value = counter;
             counter <<= 1;
+            isPrime = true;
         }
 
         State(int _value)
         {
             value = _value;
+            isPrime = false;
         }
 
         public State Compose(State other)
@@ -210,7 +213,23 @@ namespace Algiers
     //PLAYER
     public class Player
     {
-        public State state;
+        State state;
+        public State State
+        {
+            get => state;
+            set
+            {
+                if (value.isPrime)
+                {
+                    state = value;
+                }
+                else
+                {
+                    throw new Exception("Player.State can only be assigned prime States (no compositions).");
+                }
+            }
+        }
+
         public Room current_room;
 
         Dictionary<string, GameObject> inventory = new Dictionary<string, GameObject>();
@@ -512,7 +531,7 @@ namespace Algiers
         {
             id = _id;
             type = _type;
-            validity = state.code;
+            validity = state.Code;
             missingTargetError = _missingTargetError;
             dipreps = _dipreps;
             aliases = _aliases;
