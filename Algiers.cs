@@ -49,7 +49,41 @@ namespace Algiers
             {
                 if (newcmd.Overlaps(cmd))
                 {
-                    throw new Exception("A Command with phrase \"" + cmd.Phrase + "\" and overlapping validity already exists.");
+                    string phrase = cmd.Phrase;
+                    int length = cmd.Aliases != null ? cmd.Aliases.Length + 1 : 1;
+                    string[] phrases = new string[length];
+                    phrases[0] = phrase;
+
+                    string newphrase = newcmd.Phrase;
+                    int newlength = newcmd.Aliases != null ? newcmd.Aliases.Length + 1 : 1;
+                    string[] newphrases = new string[newlength];
+                    newphrases[0] = newphrase;
+
+                    if (phrases.Length > 1)
+                    {
+                        for (int i = 1; i < phrases.Length; i++)
+                        {
+                            phrases[i] = cmd.Aliases[i-1];
+                        }
+                    }
+                    if (newphrases.Length > 1)
+                    {
+                        for (int i = 1; i < newphrases.Length; i++)
+                        {
+                            newphrases[i] = newcmd.Aliases[i-1];
+                        }
+                    }
+
+                    foreach(string s in phrases)
+                    {
+                        foreach(string newS in newphrases)
+                        {
+                            if (s == newS)
+                            {
+                                throw new Exception("A Command with the phrase or alias \"" + s + "\" with overlapping validity already exists.");
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -503,7 +537,7 @@ namespace Algiers
         public bool Overlaps(Command other)
         {
             int intersection = this.validity & other.validity;
-            return (this.id == other.id) && (intersection != 0);
+            return intersection != 0;
         }
     }
 
