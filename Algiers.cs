@@ -47,7 +47,7 @@ namespace Algiers
         {
             foreach (Command cmd in Commands)
             {
-                if (newcmd.Equals(cmd))
+                if (newcmd.Overlaps(cmd))
                 {
                     throw new Exception("A Command with phrase \"" + cmd.Phrase + "\" and overlapping validity already exists.");
                 }
@@ -500,15 +500,10 @@ namespace Algiers
         string missingTargetError;
         public string MissingTargetError => missingTargetError;
 
-        public override bool Equals(object obj)
+        public bool Overlaps(Command other)
         {
-            if (obj.GetType() != typeof(Command))
-            {
-                return false;
-            }
-            Command other = (Command) obj;
-            int composition = this.validity & other.validity;
-            return (this.id == other.id) && (composition == this.validity || composition == other.validity);
+            int intersection = this.validity & other.validity;
+            return (this.id == other.id) && (intersection != 0);
         }
     }
 
