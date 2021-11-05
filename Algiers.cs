@@ -506,19 +506,6 @@ namespace Algiers
         }
     }
 
-    public class Person : GameObject
-    {
-        public Person(string _id) : base(_id) {}
-
-        List<string> gifts = new List<string>();
-        public List<string> Gifts => gifts;
-
-        public void AddGift(string giftID)
-        {
-            gifts.Add(giftID);
-        }
-    }
-
     ////////
     //PARSER
     ////////
