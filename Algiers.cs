@@ -393,7 +393,7 @@ namespace Algiers
         }
         public void RemoveObject(GameObject item)
         {
-                gameObjects.Remove(item.ID);
+            gameObjects.Remove(item.ID);
             base.Remove(item);
         }
 
@@ -490,6 +490,26 @@ namespace Algiers
         {
             return conditions[condition];
         }
+
+        public GameObject Copy()
+        {
+            GameObject copy = new GameObject(id);
+
+            foreach(KeyValuePair<string, Func<string>> rt in responsesT)
+            {
+                copy.SetTransitiveCommand(rt.Key, rt.Value);
+            }
+            foreach(KeyValuePair<string, Func<string, string>> rd in responsesD)
+            {
+                copy.SetDitransitiveCommand(rd.Key, rd.Value);
+            }
+            foreach(KeyValuePair<string, bool> con in conditions)
+            {
+                copy.SetCondition(con.Key, con.Value);
+            }
+
+            return copy;
+        }
     }
 
     public abstract class Container : GameObject
@@ -511,13 +531,6 @@ namespace Algiers
             return items.ContainsValue(obj);
         }
 
-        public GameObject AddObject(string itemID)
-        {
-            GameObject newItem = new GameObject(itemID);
-            items.Add(itemID, newItem);
-
-            return newItem;
-        }
         public GameObject GetObject(string itemID)
         {
             return items[itemID];
@@ -529,6 +542,100 @@ namespace Algiers
                 items.Remove(item.ID);
                 base.Remove(item);
             }
+        }
+    }
+
+    public class Chest : Container
+    {
+        public Chest(string _id) : base(_id) {}
+
+        public void AddObject(GameObject item)
+        {
+            Adopt(item);
+            items.Add(item.ID, item);
+        }
+    }
+
+    public class Stack : Container
+    {
+        string memberID;
+        GameObject exposedMember;
+
+        public Stack(string _id, string member) : base(_id)
+        {
+            memberID = member;
+            exposedMember = new GameObject(member);
+            Adopt(exposedMember);
+            items.Add(exposedMember.ID, exposedMember);
+        }
+        public Stack(string _id, GameObject origin) : base(_id)
+        {
+            memberID = origin.ID;
+            exposedMember = origin.Copy();
+            Adopt(exposedMember);
+            items.Add(memberID, exposedMember);
+        }
+
+        public virtual GameObject TakeMember()
+        {
+            GameObject temp = exposedMember;
+            GameObject newMember = exposedMember.Copy();
+            Adopt(newMember);
+            items[memberID] = newMember;
+            exposedMember = newMember;
+
+            base.Remove(temp);
+            return temp;
+        }
+
+        public void SetMemberTransitiveResponse(string id, Func<string> response)
+        {
+            exposedMember.SetTransitiveCommand(id, response);
+        }
+        public void SetMemberDitransitiveResponse(string id, Func<string, string> response)
+        {
+            exposedMember.SetDitransitiveCommand(id, response);
+        }
+    }
+
+    public class CountStack : Stack
+    {
+        int count;
+        public int Count => count;
+
+        public CountStack(string _id, string member, int count) : base(_id, member)
+        {
+            if (count > 0)
+            {
+                this.count = count;
+            }
+            else
+            {
+                throw new Exception("A CountStack must be initialized with a count greater than 0.");
+            }
+        }
+        public CountStack(string _id, GameObject member, int count) : base(_id, member)
+        {
+            if (count > 0)
+            {
+                this.count = count;
+            }
+            else
+            {
+                throw new Exception("A CountStack must be initialized with a count greater than 0.");
+            }
+        }
+
+        public override GameObject TakeMember()
+        {
+            GameObject member = base.TakeMember();
+            count -= 1;
+
+            if (count == 0)
+            {
+                Delete();
+            }
+            return member;
         }
     }
 
