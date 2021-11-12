@@ -13,8 +13,8 @@ namespace Algiers
         public bool done = false;
         public string start;
         public string instructions;
+        
         public Player player = new Player();
-        public string inputChar = ">";
 
         Parser.Mode mode = Parser.Mode.Standard;
         public Parser.Mode Mode => mode;
@@ -360,21 +360,11 @@ namespace Algiers
 
         public T AddObject<T>(string objID) where T : GameObject
         {
-            GameObject newObj;
-
-            if (typeof(T) == typeof(Container))
-            {
-                newObj = new Container(objID);
-                containers.Add((Container) newObj);
-            }
-            else
-            {
-                Object[] args = new Object[] {objID};
-                newObj = (T) Activator.CreateInstance(typeof(T), args);
-            }
+            Object[] args = new Object[] {objID};
+            T newObj = (T) Activator.CreateInstance(typeof(T), args);
 
             gameObjects.Add(objID, newObj);
-            return (T) newObj;
+            return newObj;
         }
 
         public void RemoveObject(GameObject item)
@@ -393,11 +383,15 @@ namespace Algiers
         public bool InRoom(string target)
         {
             bool inBase = Contains(target);
-            foreach (Container container in containers)
+            foreach (GameObject gameobj in GameObjects)
             {
-                if (container.Contains(target))
+                if (typeof(Container).IsInstanceOfType(gameobj))
                 {
-                    return true;
+                    Container container = (Container) gameobj;
+                    if (container.Contains(target))
+                    {
+                        return true;
+                    }
                 }
             }
             return inBase;
@@ -411,11 +405,15 @@ namespace Algiers
             }
             else
             {
-                foreach (Container container in containers)
+                foreach (GameObject gameobj in GameObjects)
                 {
-                    if (container.Contains(target))
+                    if (typeof(Container).IsInstanceOfType(gameobj))
                     {
-                        return container.GetObject(target);
+                        Container container = (Container) gameobj;
+                        if (container.Contains(target))
+                        {
+                            return container.GetObject(target);
+                        }
                     }
                 }
             }
