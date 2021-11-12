@@ -7,9 +7,44 @@ namespace Algiers
     //ELEMENTS
     //////////
 
-    //WORLD
-    public class World
+    public abstract class Element
     {
+        protected Element parent;
+        public Element Parent => parent;
+
+        protected List<Element> children = new List<Element>();
+        public List<Element> Children => children;
+
+        protected virtual void Remove(Element target)
+        {
+            children.Remove(target);
+        }
+
+        public void Delete()
+        {
+            parent.Remove(this);
+        }
+
+        protected void Adopt(Element child)
+        {
+            if (child.parent != null)
+            {
+                child.parent.children.Remove(child);
+            }
+            child.parent = this;
+            children.Add(child);
+        }
+    }
+
+    //WORLD
+    public class World : Element
+    {
+        protected override void Remove(Element target)
+        {
+            base.Remove(target);
+            rooms.Remove(((Room)target).ID);
+        }
+
         public bool done = false;
         public string start;
         public string instructions;
@@ -29,6 +64,13 @@ namespace Algiers
         }
 
         Dictionary<string, Room> rooms = new Dictionary<string, Room>();
+        public Room AddRoom(string roomID)
+        {
+            Room newRoom = new Room(roomID);
+            Adopt(newRoom);
+            rooms.Add(roomID, newRoom);
+            return newRoom;
+        }
         public Room GetRoom(string id)
         {
             return rooms[id];
@@ -163,15 +205,9 @@ namespace Algiers
         {
             return responsesD[cmd];
         }
-        
-        public Room AddRoom(string roomID)
-        {
-            Room newRoom = new Room(roomID);
-            rooms.Add(roomID, newRoom);
-            return newRoom;
-        }
     }
 
+    //STATE
     public class State
     {
         static int counter = 1;
@@ -211,8 +247,13 @@ namespace Algiers
     }
 
     //PLAYER
-    public class Player
+    public class Player : Element
     {
+        protected override void Remove(Element target)
+        {
+            RemoveFromInventory((GameObject) target);
+        }
+
         State state;
         public State State
         {
@@ -300,37 +341,26 @@ namespace Algiers
 
         public void AddToInventory(GameObject target)
         {
+            Adopt(target);
             inventory.Add(target.ID, target);
-        }
-
-        public void AddToInventoryFrom(GameObject target, IOrigin origin)
-        {
-            if (origin.Contains(target))
-            {
-                inventory.Add(target.ID, target);
-                origin.RemoveObject(target);
-            }
         }
         public void RemoveFromInventory(GameObject target)
         {
             inventory.Remove(target.ID);
+            base.Remove(target);
         }
     }
 
-    //ORIGIN
-    public interface IOrigin
-    {
-        void RemoveObject(GameObject target);
-        bool Contains(string objID);
-        bool Contains(GameObject obj);
-    }
-
     //ROOM
-    public class Room : IOrigin
+    public class Room : Element
     {
         public Room(string _id)
         {
             id = _id;
+        }
+        protected override void Remove(Element target)
+        {
+            RemoveObject((GameObject) target);
         }
 
         string id;
@@ -356,23 +386,15 @@ namespace Algiers
         }
         public Dictionary<string, GameObject>.ValueCollection GameObjects => gameObjects.Values;
 
-        List<Container> containers = new List<Container>();
-
-        public T AddObject<T>(string objID) where T : GameObject
+        public void AddObject(GameObject item)
         {
-            Object[] args = new Object[] {objID};
-            T newObj = (T) Activator.CreateInstance(typeof(T), args);
-
-            gameObjects.Add(objID, newObj);
-            return newObj;
+            Adopt(item);
+            gameObjects.Add(item.ID, item);
         }
-
         public void RemoveObject(GameObject item)
         {
-            if (gameObjects.ContainsValue(item))
-            {
                 gameObjects.Remove(item.ID);
-            }
+            base.Remove(item);
         }
 
         public void AddExit(string goWord, string roomID)
@@ -422,7 +444,7 @@ namespace Algiers
     }
 
     //GAMEOBJECTS
-    public class GameObject
+    public class GameObject : Element
     {
         public GameObject(string _id)
         {
@@ -470,11 +492,16 @@ namespace Algiers
         }
     }
 
-    public class Container : GameObject, IOrigin
+    public abstract class Container : GameObject
     {
         public Container(string _id) : base(_id) {}
 
-        Dictionary<string, GameObject> items = new Dictionary<string, GameObject>();
+        protected override void Remove(Element target)
+        {
+            RemoveObject((GameObject) target);
+        }
+
+        protected Dictionary<string, GameObject> items = new Dictionary<string, GameObject>();
         public bool Contains(string objID)
         {
             return items.ContainsKey(objID);
@@ -500,6 +527,7 @@ namespace Algiers
             if (Contains(item))
             {
                 items.Remove(item.ID);
+                base.Remove(item);
             }
         }
     }
