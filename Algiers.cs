@@ -556,19 +556,19 @@ namespace Algiers
         }
     }
 
-    public class Stack : Container
+    public class Hoard : Container
     {
         string memberID;
         GameObject exposedMember;
 
-        public Stack(string _id, string member) : base(_id)
+        public Hoard(string _id, string member) : base(_id)
         {
             memberID = member;
             exposedMember = new GameObject(member);
             Adopt(exposedMember);
             items.Add(exposedMember.ID, exposedMember);
         }
-        public Stack(string _id, GameObject origin) : base(_id)
+        public Hoard(string _id, GameObject origin) : base(_id)
         {
             memberID = origin.ID;
             exposedMember = origin.Copy();
@@ -598,12 +598,12 @@ namespace Algiers
         }
     }
 
-    public class CountStack : Stack
+    public class NumHoard : Hoard
     {
         int count;
         public int Count => count;
 
-        public CountStack(string _id, string member, int count) : base(_id, member)
+        public NumHoard(string _id, string member, int count) : base(_id, member)
         {
             if (count > 0)
             {
@@ -614,7 +614,7 @@ namespace Algiers
                 throw new Exception("A CountStack must be initialized with a count greater than 0.");
             }
         }
-        public CountStack(string _id, GameObject member, int count) : base(_id, member)
+        public NumHoard(string _id, GameObject member, int count) : base(_id, member)
         {
             if (count > 0)
             {
