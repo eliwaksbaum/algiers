@@ -32,7 +32,7 @@ namespace Algiers
         {
             if (child.parent != null)
             {
-                child.parent.children.Remove(child);
+                child.parent.Remove(child);
             }
             child.parent = this;
             children.Add(child);
