@@ -158,15 +158,15 @@ namespace Algiers
             return cmd;
         }
 
-        public void SetIntransitiveCommand(Command cmd, Func<string> response)
+        public void SetIntransitiveResponse(Command cmd, Func<string> response)
         {
             responses[cmd] = response;
         }
-        public void SetTransitiveCommand(Command cmd, Func<string, string> responseT)
+        public void SetTransitiveResponse(Command cmd, Func<string, string> responseT)
         {
             responsesT[cmd] = responseT;
         }
-        public void SetDitransitiveCommand(Command cmd, Func<string, string, string> responseD)
+        public void SetDitransitiveResponse(Command cmd, Func<string, string, string> responseD)
         {
             responsesD[cmd] = responseD;
         }
@@ -429,7 +429,6 @@ namespace Algiers
         {
             return exits.ContainsKey(exit) ? exits[exit] : null;
         }
-
         Dictionary<string, GameObject> gameObjects = new Dictionary<string, GameObject>();
         public bool Contains(string objID)
         {
@@ -524,11 +523,11 @@ namespace Algiers
             return responsesD.ContainsKey(id) ? responsesD[id] : null;
         }
 
-        public void SetTransitiveCommand(string id, Func<string> responseT)
+        public void SetTransitiveResponse(string id, Func<string> responseT)
         {
             responsesT.Add(id, responseT);
         }
-        public void SetDitransitiveCommand(string id, Func<string, string> responseD)
+        public void SetDitransitiveResponse(string id, Func<string, string> responseD)
         {
             responsesD.Add(id, responseD);
         }
@@ -555,11 +554,11 @@ namespace Algiers
 
             foreach(KeyValuePair<string, Func<string>> rt in responsesT)
             {
-                copy.SetTransitiveCommand(rt.Key, rt.Value);
+                copy.SetTransitiveResponse(rt.Key, rt.Value);
             }
             foreach(KeyValuePair<string, Func<string, string>> rd in responsesD)
             {
-                copy.SetDitransitiveCommand(rd.Key, rd.Value);
+                copy.SetDitransitiveResponse(rd.Key, rd.Value);
             }
             foreach(KeyValuePair<string, bool> con in conditions)
             {
@@ -572,11 +571,11 @@ namespace Algiers
         {
             foreach(KeyValuePair<string, Func<string>> rt in responsesT)
             {
-                mold.SetTransitiveCommand(rt.Key, rt.Value);
+                mold.SetTransitiveResponse(rt.Key, rt.Value);
             }
             foreach(KeyValuePair<string, Func<string, string>> rd in responsesD)
             {
-                mold.SetDitransitiveCommand(rd.Key, rd.Value);
+                mold.SetDitransitiveResponse(rd.Key, rd.Value);
             }
             foreach(KeyValuePair<string, bool> con in conditions)
             {
@@ -670,11 +669,11 @@ namespace Algiers
 
         public void SetMemberTransitiveResponse(string id, Func<string> response)
         {
-            exposedMember.SetTransitiveCommand(id, response);
+            exposedMember.SetTransitiveResponse(id, response);
         }
         public void SetMemberDitransitiveResponse(string id, Func<string, string> response)
         {
-            exposedMember.SetDitransitiveCommand(id, response);
+            exposedMember.SetDitransitiveResponse(id, response);
         }
     }
 
