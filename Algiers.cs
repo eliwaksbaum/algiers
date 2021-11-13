@@ -354,7 +354,7 @@ namespace Algiers
             if (inventory.ContainsKey(target.ID) && target.Stackable)
             {
                 GameObject old = GetFromInventory(target.ID);
-                if (InventoryStack.IsStack(target))
+                if (InventoryStack.IsStack(old))
                 {
                     //target.Delete();
                     InventoryStack stack = (InventoryStack) old;
@@ -1014,6 +1014,11 @@ namespace Algiers
                 default:
                     return false;
             }
+        }
+
+        public static string CapitalizeFirst(string str)
+        {
+            return str.Substring(0, 1).ToUpper() + str.Substring(1);
         }
     }
 }

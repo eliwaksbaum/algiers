@@ -38,14 +38,19 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    string output = "";
-                    foreach (GameObject item in player.Inventory)
+                    int i = 0;
+                    string[] invs = new string[player.Inventory.Count];
+                    foreach (GameObject inv in player.Inventory)
                     {
-                        string first = item.ID.Substring(0, 1).ToUpper();
-                        string rest = item.ID.Substring(1);
-                        output = output + first + rest + ", ";
+                        invs[i] = Parser.CapitalizeFirst(inv.ID);
+                        if (InventoryStack.IsStack(inv))
+                        {
+                            InventoryStack stack = (InventoryStack) inv;
+                            invs[i] += " (x" + stack.Count + ")";
+                        }
+                        i++;
                     }
-                    return output.Remove(output.Length - 2);
+                    return String.Join(", ", invs);
                 }
             };
         }
