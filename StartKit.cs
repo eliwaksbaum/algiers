@@ -82,7 +82,7 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject personObj = player.GetObject(person);
+                    GameObject personObj = player.GetFromRoom(person);
                     Func<string> who = personObj.GetTransitiveResponse(person);
                     if (who == null)
                     {
@@ -99,7 +99,8 @@ namespace Algiers.StartKit
         public static Func<string, string> Take(Player player)
         {
             return (target) => {
-                if (player.InInventory(target))
+                GameObject targetObj = player.GetFromRoom(target);
+                if (player.InInventory(target) && !targetObj.Stackable)
                 {
                     return "You already have the " + target + " in your inventory.";
                 }
@@ -109,7 +110,6 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject targetObj = player.GetObject(target);
                     Func<string> take = targetObj.GetTransitiveResponse("take");
                     if (take == null)
                     {
@@ -132,7 +132,7 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject person = player.GetObject(name);
+                    GameObject person = player.GetFromRoom(name);
                     Func<string> talk = person.GetTransitiveResponse("talk");
                     if (talk == null)
                     {
@@ -173,7 +173,7 @@ namespace Algiers.StartKit
                     return "You don't have " + indef + tool + " in your inventory.";
                 }
                 
-                GameObject toolObj = player.GetObject(tool);
+                GameObject toolObj = player.GetFromInventory(tool);
                 Func<string> transitiveUse = toolObj.GetTransitiveResponse("use");
                 if (transitiveUse != null)
                 {
@@ -189,7 +189,7 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject targetObj = player.GetObject(target);;
+                    GameObject targetObj = player.GetFromRoom(target);;
                     Func<string, string> ditransitiveUse = targetObj.GetDitransitiveResponse("use");
                     string nullHandler = "You can't use the " + tool + " with the " + target + ".";
                     if (ditransitiveUse == null)
@@ -223,9 +223,9 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject personObj = player.GetObject(person);
+                    GameObject personObj = player.GetFromRoom(person);
                     Func<string, string> give = personObj.GetDitransitiveResponse("give");
-                    string nullHandler = "You can't give the " + gift + " to the " + person + ".";
+                    string nullHandler = "You can't give the " + gift + " to " + person + ".";
                     if (give == null)
                     {
                         return nullHandler;

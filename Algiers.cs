@@ -326,16 +326,23 @@ namespace Algiers
 
         public GameObject GetObject(string target)
         {
+            GameObject invObj = GetFromInventory(target);
+            return invObj != null ? invObj : GetFromRoom(target);
+        }
+        public GameObject GetFromInventory(string target)
+        {
             if (InInventory(target))
             {
                 return inventory[target];
             }
-
+            return null;
+        }
+        public GameObject GetFromRoom(string target)
+        {
             if (InRoom(target))
             {
                 return current_room.GetObject(target);
             }
-
             return null;
         }
 
