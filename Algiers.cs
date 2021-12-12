@@ -814,14 +814,18 @@ namespace Algiers
 
     public class Parser
     {
+        static Parser parser;
+        static public Parser GetParser => parser;
         static public string Clear = Environment.NewLine + Environment.NewLine;
         public enum Mode {Standard, Raw}
 
         World world;
+        string afterword = null;
 
         public Parser(World _world)
         {
             world = _world;
+            parser = this;
         }
         
         public string Parse(string input, Mode mode)
@@ -832,15 +836,27 @@ namespace Algiers
             {
                 return "Please type a command.";
             }
+            string response;
+
             switch (mode)
             {
                 case Mode.Standard:
-                    return StandardParse(input);
+                    response = StandardParse(input);
+                    break;
                 case Mode.Raw:
-                    return RawParse(input);
+                    response = RawParse(input);
+                    break;
                 default:
                     throw new Exception("Unexpected Parser.Mode value.");
             }
+
+            if (afterword != null)
+            {
+                response += "\n\n" + afterword;
+                afterword = null;
+            }
+
+            return response;
         }
 
         string RawParse(string input)
@@ -1002,6 +1018,11 @@ namespace Algiers
                 phrase[i-start] = remainder[i];
             }
             return phrase;
+        }
+
+        public void AddAfterword(string aw)
+        {
+            afterword = aw;
         }
 
         public static bool StartsWithVowel(string str)
