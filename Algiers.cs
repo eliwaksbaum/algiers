@@ -280,7 +280,6 @@ namespace Algiers
         public Dictionary<string, GameObject>.ValueCollection Inventory => inventory.Values;
 
         List<string> waypoints = new List<string>();
-        public List<string> Waypoints => waypoints;
 
         Dictionary<string, int> counters = new Dictionary<string, int>();
 
@@ -291,7 +290,11 @@ namespace Algiers
                 waypoints.Add(newPoint);
             }
         }
-
+        public bool HasWaypoint(string point)
+        {
+            return waypoints.Contains(point);
+        }
+        
         public void AddCounter(string counter)
         {
             counters.Add(counter, 0);
