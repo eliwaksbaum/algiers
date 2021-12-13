@@ -230,7 +230,7 @@ namespace Algiers.StartKit
                 {
                     GameObject personObj = player.GetFromRoom(person);
                     Func<string, string> give = personObj.GetDitransitiveResponse("give");
-                    string nullHandler = "You can't give the " + gift + " to " + person + ".";
+                    string nullHandler = "You can't give the " + gift + " to " + personObj.Name + ".";
                     if (give == null)
                     {
                         return nullHandler;

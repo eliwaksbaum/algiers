@@ -494,14 +494,17 @@ namespace Algiers
     //GAMEOBJECTS
     public class GameObject : Element
     {
-        public GameObject(string _id, bool stackable = false)
+        public GameObject(string _id, string name = null, bool stackable = false)
         {
             id = _id;
             this.stackable = stackable;
+            this.name = name == null ? id : name;
         }
 
         string id;
         public string ID => id;
+        string name;
+        public string Name => name;
         bool stackable;
         public bool Stackable => stackable;
         Dictionary<string, Func<string>> responsesT = new Dictionary<string, Func<string>>();
@@ -544,7 +547,7 @@ namespace Algiers
 
         public GameObject Copy()
         {
-            GameObject copy = new GameObject(id, stackable);
+            GameObject copy = new GameObject(id, name, stackable);
 
             foreach(KeyValuePair<string, Func<string>> rt in responsesT)
             {
@@ -630,7 +633,7 @@ namespace Algiers
         public Hoard(string _id, string member) : base(_id)
         {
             memberID = member;
-            exposedMember = new GameObject(member, true);
+            exposedMember = new GameObject(member, stackable: true);
             Adopt(exposedMember);
             items.Add(exposedMember.ID, exposedMember);
         }
@@ -719,14 +722,14 @@ namespace Algiers
         GameObject origin;
         public GameObject Origin => origin;
 
-        public InventoryStack(GameObject origin) : base(origin.ID, true)
+        public InventoryStack(GameObject origin) : base(origin.ID, stackable:true)
         {
             count = 2;
             this.origin = origin;
             origin.CopyResponsesTo(this);
             origin.Delete();
         }
-        InventoryStack(GameObject origin, int count) : base(origin.ID, true)
+        InventoryStack(GameObject origin, int count) : base(origin.ID, stackable:true)
         {
             this.count = count;
             this.origin = origin;
@@ -943,6 +946,13 @@ namespace Algiers
             }
             else
             {
+                if (words.Length - head > 1)
+                {
+                    if (words[head] == "the" || words[head] == "a" || words[head] == "an")
+                    {
+                        head ++;
+                    }
+                }
                 string objID = String.Join(" ", Subarray(words, head));
                 return world.GetTransitiveResponse(cmd)(objID);
             }
@@ -969,13 +979,28 @@ namespace Algiers
                         if (diprep == words[i])
                         {
                             diprepIndex = i;
-                            if (i != head) //If there are words inbetween the end of the command and the diprep
+                            if (diprepIndex != head) //If there are words inbetween the end of the command and the diprep
                             {
+                                if (diprepIndex - head > 1)
+                                {
+                                    if (words[head] == "the" || words[head] == "a" || words[head] == "an")
+                                    {
+                                        head ++;
+                                    }
+                                }
                                 obj1ID = String.Join(" ", Subarray(words, head, diprepIndex));
                             }
-                            if (i < words.Length) //If there are words after the diprep
+                            if (diprepIndex < words.Length) //If there are words after the diprep
                             {
-                                obj2ID = String.Join(" ", Subarray(words, diprepIndex + 1));
+                                int firstAfterPrep = diprepIndex + 1;
+                                if (words.Length - firstAfterPrep > 1)
+                                {
+                                    if (words[firstAfterPrep] == "the" || words[firstAfterPrep] == "a" || words[firstAfterPrep] == "an")
+                                    {
+                                        firstAfterPrep ++;
+                                    }
+                                }
+                                obj2ID = String.Join(" ", Subarray(words, firstAfterPrep));
                             }
                         }
                     }
@@ -984,6 +1009,13 @@ namespace Algiers
                 //If no diprep, treat the whole remaining string as obj1
                 if (diprepIndex == 0)
                 {
+                    if (words.Length - head > 1)
+                    {
+                        if (words[head] == "the" || words[head] == "a" || words[head] == "an")
+                        {
+                            head ++;
+                        }
+                    }
                     obj1ID = String.Join(" ", Subarray(words, head));
                     return world.GetDitransitiveResponse(cmd)(obj1ID, "");
                 }
