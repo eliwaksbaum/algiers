@@ -269,7 +269,7 @@ namespace Algiers.StartKit
             while (!world.done)
             {
                 Console.WriteLine("");
-                string response = parser.Parse(Console.ReadLine(), world.Mode);
+                string response = parser.Parse(Console.ReadLine());
                 Console.WriteLine("");
                 Console.WriteLine(response);
             }
@@ -302,7 +302,7 @@ namespace Algiers.StartKit
             {
                 string output = inputChar + input + Parser.Clear;
 
-                output += parser.Parse(input, world.Mode) + Parser.Clear;
+                output += parser.Parse(input) + Parser.Clear;
 
                 return output;
             }

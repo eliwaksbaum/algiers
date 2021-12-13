@@ -54,18 +54,6 @@ namespace Algiers
         
         public Player player = new Player();
 
-        Parser.Mode mode = Parser.Mode.Standard;
-        public Parser.Mode Mode => mode;
-        public void GoStandard()
-        {
-            mode = Parser.Mode.Standard;
-        }
-        public void GoRaw(Func<string, string> response)
-        {
-            mode = Parser.Mode.Raw;
-            rawResponse = response;
-        }
-
         Dictionary<string, Room> rooms = new Dictionary<string, Room>();
         public Room AddRoom(string roomID)
         {
@@ -90,8 +78,6 @@ namespace Algiers
         Dictionary<Command, Func<string>> responses = new Dictionary<Command, Func<string>>();
         Dictionary<Command, Func<string, string>> responsesT = new Dictionary<Command, Func<string, string>>();
         Dictionary<Command, Func<string, string, string>> responsesD = new Dictionary<Command, Func<string, string, string>>();
-        Func<string, string> rawResponse;
-        public Func<string, string> RawResponse => rawResponse;
 
         void CheckCommand(Command newcmd)
         {
@@ -817,7 +803,19 @@ namespace Algiers
         static Parser parser;
         static public Parser GetParser => parser;
         static public string Clear = Environment.NewLine + Environment.NewLine;
+        
         public enum Mode {Standard, Raw}
+        Mode mode = Mode.Standard;
+        Func<string, string> rawResponse;
+        public void GoStandard()
+        {
+            mode = Mode.Standard;
+        }
+        public void GoRaw(Func<string, string> response)
+        {
+            mode = Parser.Mode.Raw;
+            rawResponse = response;
+        }
 
         World world;
         string afterword = null;
@@ -828,7 +826,7 @@ namespace Algiers
             parser = this;
         }
         
-        public string Parse(string input, Mode mode)
+        public string Parse(string input)
         {
             input = input.ToLower();
 
@@ -861,7 +859,7 @@ namespace Algiers
 
         string RawParse(string input)
         {
-            return world.RawResponse(input);
+            return rawResponse(input);
         }
 
         string StandardParse(string input)
