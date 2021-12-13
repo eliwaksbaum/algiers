@@ -194,7 +194,7 @@ namespace Algiers.StartKit
                 }
                 else
                 {
-                    GameObject targetObj = player.GetFromRoom(target);;
+                    GameObject targetObj = player.GetObject(target);;
                     Func<string, string> ditransitiveUse = targetObj.GetDitransitiveResponse("use");
                     string nullHandler = "You can't use the " + tool + " with the " + target + ".";
                     if (ditransitiveUse == null)
