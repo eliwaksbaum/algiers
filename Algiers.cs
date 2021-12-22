@@ -234,9 +234,9 @@ namespace Algiers
             return new State(~value);
         }
 
-        public bool IsWithin(int validity)
+        public bool IsWithin(State other)
         {
-            return (validity & value) == value;
+            return (other.Code & value) == value;
         }
     }
 
@@ -772,7 +772,7 @@ namespace Algiers
         {
             id = _id;
             type = _type;
-            validity = state.Code;
+            validity = state;
             missingTargetError = _missingTargetError;
             dipreps = _dipreps;
             aliases = _aliases;
@@ -783,8 +783,8 @@ namespace Algiers
         public CommandType Type => type;
         string id;
         public string Phrase => id;
-        int validity;
-        public int Validity => validity;
+        State validity;
+        public State Validity => validity;
         string[] preps;
         public string[] Preps => preps;
         string[] dipreps;
@@ -796,7 +796,7 @@ namespace Algiers
 
         public bool Overlaps(Command other)
         {
-            int intersection = this.validity & other.validity;
+            int intersection = this.validity.Code & other.validity.Code;
             return intersection != 0;
         }
     }
