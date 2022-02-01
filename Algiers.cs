@@ -290,6 +290,10 @@ namespace Algiers
         {
             counters.Add(counter, 0);
         }
+        public void AddCounter(string counter, int init)
+        {
+            counters.Add(counter, init);
+        }
         public int GetCounter(string counter)
         {
             return counters[counter];
