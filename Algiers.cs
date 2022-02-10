@@ -51,6 +51,13 @@ namespace Algiers
         public bool done = false;
         public string start;
         public string instructions;
+        static World world;
+        public static World GetWorld => world;
+
+        public World()
+        {
+            world = this;
+        }
         
         public Player player = new Player();
 
