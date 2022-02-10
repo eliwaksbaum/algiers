@@ -141,7 +141,7 @@ namespace Algiers.StartKit
                     Func<string> talk = person.GetTransitiveResponse("talk");
                     if (talk == null)
                     {
-                        return "You can't talk to the " + person + ".";
+                        return "You can't talk to the " + name + ".";
                     }
                     else
                     {
