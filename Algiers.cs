@@ -88,6 +88,18 @@ namespace Algiers
 
         void CheckCommand(Command newcmd)
         {
+            string newphrase = newcmd.Phrase;
+            int newlength = newcmd.Aliases != null ? newcmd.Aliases.Length + 1 : 1;
+            string[] newphrases = new string[newlength];
+            newphrases[0] = newphrase;
+            if (newphrases.Length > 1)
+            {
+                for (int i = 1; i < newphrases.Length; i++)
+                {
+                    newphrases[i] = newcmd.Aliases[i-1];
+                }
+            }
+
             foreach (Command cmd in Commands)
             {
                 if (newcmd.Overlaps(cmd))
@@ -96,24 +108,11 @@ namespace Algiers
                     int length = cmd.Aliases != null ? cmd.Aliases.Length + 1 : 1;
                     string[] phrases = new string[length];
                     phrases[0] = phrase;
-
-                    string newphrase = newcmd.Phrase;
-                    int newlength = newcmd.Aliases != null ? newcmd.Aliases.Length + 1 : 1;
-                    string[] newphrases = new string[newlength];
-                    newphrases[0] = newphrase;
-
                     if (phrases.Length > 1)
                     {
                         for (int i = 1; i < phrases.Length; i++)
                         {
                             phrases[i] = cmd.Aliases[i-1];
-                        }
-                    }
-                    if (newphrases.Length > 1)
-                    {
-                        for (int i = 1; i < newphrases.Length; i++)
-                        {
-                            newphrases[i] = newcmd.Aliases[i-1];
                         }
                     }
 
@@ -171,23 +170,45 @@ namespace Algiers
 
         public Command GetCommand(string phrase)
         {
-            foreach(Command cmd in commands)
-            {
-                if (player.State.IsWithin(cmd.Validity))
+            List<Command> possibles = commands.FindAll((Command cmd) => {
+                if (phrase == cmd.Phrase)
                 {
-                    if (phrase == cmd.Phrase)
+                    return true;
+                }
+                else if (cmd.Aliases != null)
+                {
+                    foreach (string nickname in cmd.Aliases)
                     {
-                        return cmd;
-                    }
-                    else if (cmd.Aliases != null)
-                    {
-                        foreach (string nickname in cmd.Aliases)
+                        if (phrase == nickname)
                         {
-                            if (phrase == nickname)
-                            {
-                                return cmd;
-                            }
+                            return true;
                         }
+                    }
+                    return false;
+                }
+                else
+                {
+                    return false;
+                }
+            });
+
+            if (possibles.Count > 0)
+            {
+                Command valid = possibles.Find((Command cmd) => {
+                    return player.State.IsWithin(cmd.Validity);
+                });
+                if (valid != null)
+                {
+                    return valid;
+                }
+                else
+                {
+                    Command ddefault = possibles.Find((Command cmd) => {
+                        return cmd.Validity.Code == 0;
+                    });
+                    if (player.State.Opt_In && ddefault != null)
+                    {
+                        return ddefault;
                     }
                 }
             }
@@ -213,16 +234,21 @@ namespace Algiers
     {
         static int counter = 1;
         public static State All = new State(~0);
+        public static State Default = new State(0);
 
         int value;
         public int Code => value;
-        public bool isPrime;
+        bool isPrime;
+        public bool IsPrime => isPrime;
+        bool opt_in;
+        public bool Opt_In => opt_in;
 
-        public State()
+        public State(bool default_opt_in = true)
         {
             value = counter;
             counter <<= 1;
             isPrime = true;
+            opt_in = default_opt_in;
         }
 
         State(int _value)
@@ -261,7 +287,7 @@ namespace Algiers
             get => state;
             set
             {
-                if (value.isPrime)
+                if (value.IsPrime)
                 {
                     state = value;
                 }
@@ -805,8 +831,15 @@ namespace Algiers
 
         public bool Overlaps(Command other)
         {
-            int intersection = this.validity.Code & other.validity.Code;
-            return intersection != 0;
+            if (this.validity.Code == 0 && other.validity.Code == 0)
+            {
+                return true;
+            }
+            else
+            {
+                int intersection = this.validity.Code & other.validity.Code;
+                return intersection != 0;
+            }
         }
     }
 
