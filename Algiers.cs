@@ -557,11 +557,11 @@ namespace Algiers
 
         public void SetTransitiveResponse(string id, Func<string> responseT)
         {
-            responsesT.Add(id, responseT);
+            responsesT[id] = responseT;
         }
         public void SetDitransitiveResponse(string id, Func<string, string> responseD)
         {
-            responsesD.Add(id, responseD);
+            responsesD[id] = responseD;
         }
 
         public void SetCondition(string condition, bool value)
