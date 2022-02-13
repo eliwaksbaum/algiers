@@ -863,7 +863,7 @@ namespace Algiers
         }
 
         World world;
-        string afterword = null;
+        string afterword = "";
 
         public Parser(World _world)
         {
@@ -893,10 +893,10 @@ namespace Algiers
                     throw new Exception("Unexpected Parser.Mode value.");
             }
 
-            if (afterword != null)
+            if (afterword != "")
             {
-                response += "\n\n" + afterword;
-                afterword = null;
+                response += afterword;
+                afterword = "";
             }
 
             return response;
@@ -1094,7 +1094,7 @@ namespace Algiers
 
         public void AddAfterword(string aw)
         {
-            afterword = aw;
+            afterword += "\n\n" + aw;
         }
 
         public static bool StartsWithVowel(string str)
