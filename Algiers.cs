@@ -972,6 +972,10 @@ namespace Algiers
 
         string HandleTransitive(Command cmd, string[] words, int head)
         {
+            if (head >= words.Length)
+            {
+                return cmd.MissingTargetError;
+            }
             if (cmd.Preps != null)
             {
                 foreach (string prep in cmd.Preps)
@@ -982,6 +986,7 @@ namespace Algiers
                     }
                 }
             }
+
             if (head >= words.Length)
             {
                 return cmd.MissingTargetError;
