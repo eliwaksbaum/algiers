@@ -324,6 +324,10 @@ namespace Algiers
             counters.Add(counter, init);
             return init;
         }
+        public void SetCounter(string counter, int val)
+        {
+            counters[counter] = val;
+        }
         public int GetCounter(string counter)
         {
             return counters[counter];
